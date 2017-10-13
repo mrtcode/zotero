@@ -2783,7 +2783,7 @@ var ZoteroPane = new function()
 						canIndex = false;
 					}
 					
-					if (canRecognize && !Zotero_RecognizePDF.canRecognize(item)) {
+					if (canRecognize && !Zotero.RecognizePDF.canRecognize(item)) {
 						canRecognize = false;
 					}
 					
@@ -2876,7 +2876,7 @@ var ZoteroPane = new function()
 					if (item.isAttachment()) {
 						var showSep4 = false;
 						
-						if (Zotero_RecognizePDF.canRecognize(item)) {
+						if (Zotero.RecognizePDF.canRecognize(item)) {
 							show.push(m.recognizePDF);
 							showSep4 = true;
 						}
