@@ -161,6 +161,7 @@ let Zotero_RecognizePDF_Dialog = new function () {
 	}
 	
 	function _updateProgress() {
+		if(!_progressWindow) return;
 		let total = Zotero.RecognizePDF.getTotal();
 		let processed = Zotero.RecognizePDF.getProcessed();
 		_progressIndicator.value = processed * 100 / total;
