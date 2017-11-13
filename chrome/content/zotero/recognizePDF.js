@@ -51,13 +51,14 @@ let Zotero_RecognizePDF_Dialog = new function () {
 		}
 		_progressWindow = window.openDialog('chrome://zotero/content/recognizePDF.xul', '', 'chrome,close=yes,resizable=yes,dependent,dialog,centerscreen');
 		_progressWindow.addEventListener('pageshow', _onWindowLoaded.bind(this), false);
+		_updateProgress();
 	}
 	
 	function close() {
 		if (!_progressWindow) return;
-		Zotero.RecognizePDF.onRowAdded = null;
-		Zotero.RecognizePDF.onRowUpdated = null;
-		Zotero.RecognizePDF.onRowDeleted = null;
+		Zotero.RecognizePDF.removeListener('onRowAdded');
+		Zotero.RecognizePDF.removeListener('onRowUpdated');
+		Zotero.RecognizePDF.removeListener('onRowDeleted');
 		_progressWindow.close();
 		_progressWindow = null;
 		_progressIndicator = null;
@@ -134,35 +135,44 @@ let Zotero_RecognizePDF_Dialog = new function () {
 		
 		_updateProgress();
 		
-		Zotero.RecognizePDF.onRowAdded = function (row) {
+		Zotero.RecognizePDF.addListener('onRowAdded', function (row) {
 			_rowIDs.push(row.id);
 			let treeitem = _rowToTreeItem(row);
 			treechildren.appendChild(treeitem);
 			
 			_updateProgress();
-		}.bind(this);
+		});
 		
-		Zotero.RecognizePDF.onRowUpdated = function (row) {
+		Zotero.RecognizePDF.addListener('onRowUpdated', function (row) {
 			let itemIcon = _progressWindow.document.getElementById('item-' + row.id + '-icon');
 			let itemTitle = _progressWindow.document.getElementById('item-' + row.id + '-title');
 			
 			itemIcon.setAttribute('src', _getImageByStatus(row.status));
 			itemTitle.setAttribute('label', row.message);
 			_updateProgress();
-		}.bind(this);
+		});
 		
-		Zotero.RecognizePDF.onRowDeleted = function (row) {
+		Zotero.RecognizePDF.addListener('onRowDeleted', function (row) {
 			_rowIDs.splice(_rowIDs.indexOf(row.id), 1);
 			let treeitem = _progressWindow.document.getElementById('item-' + row.id);
 			treeitem.parentNode.removeChild(treeitem);
 			_updateProgress();
-		}.bind(this);
+		});
 	}
 	
 	function _updateProgress() {
 		let total = Zotero.RecognizePDF.getTotal();
 		let processed = Zotero.RecognizePDF.getProcessed();
 		_progressIndicator.value = processed * 100 / total;
+		if(processed === total) {
+			// Todo: add multilingual string
+			_progressWindow.document.getElementById("cancel-button").label = 'Clear';
+			_progressWindow.document.getElementById("label").value = 'Metadata Retrieval Complete'
+		} else {
+			// Todo: add multilingual string
+			_progressWindow.document.getElementById("cancel-button").label = 'Cancel';
+			_progressWindow.document.getElementById("label").value = 'Retrieving Metadata..'
+		}
 	}
 	
 	/**

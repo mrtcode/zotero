@@ -243,8 +243,8 @@
 						</hbox>
 					</hbox>
 
-					<toolbarbutton id="zotero-tb-recognize" hidden="false"
-					oncommand="Zotero_RecognizePDF_Dialog.open()"/>
+					<toolbarbutton id="zotero-tb-recognize" hidden="true"
+						oncommand="Zotero_RecognizePDF_Dialog.open()"/>
 
 					<toolbarbutton id="zotero-tb-sync-error" hidden="true"/>
 					

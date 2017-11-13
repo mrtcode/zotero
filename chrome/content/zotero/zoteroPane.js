@@ -85,6 +85,14 @@ var ZoteroPane = new function()
 		// Set key down handler
 		document.getElementById('appcontent').addEventListener('keydown', ZoteroPane_Local.handleKeyDown, true);
 		
+		Zotero.RecognizePDF.addListener('onEmpty', function (row) {
+			document.getElementById('zotero-tb-recognize').hidden = true;
+		});
+		
+		Zotero.RecognizePDF.addListener('onNonEmpty', function (row) {
+			document.getElementById('zotero-tb-recognize').hidden = false;
+		});
+		
 		_loaded = true;
 		
 		var zp = document.getElementById('zotero-pane');
