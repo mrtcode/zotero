@@ -292,7 +292,7 @@ Zotero.RecognizePDF = new function () {
 		}
 		
 		// Look for ISBNs if no DOI
-		let isbns = _findISBNs(allText);
+		let isbns = _findISBNs(firstChunk);
 		if (isbns.length) {
 			Zotero.debug('RecognizePDF: Found ISBNs: ' + isbns);
 			
