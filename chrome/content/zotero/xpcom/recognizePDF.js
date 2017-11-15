@@ -570,7 +570,7 @@ Zotero.RecognizePDF = new function () {
 				text: fulltext
 			});
 			
-			let uri = 'http://52.202.100.87:8003/recognize';
+			let uri = 'http://34.201.221.255:8003/recognize';
 			
 			let req = await Zotero.HTTP.request(
 				'POST',

@@ -51,7 +51,6 @@ let Zotero_RecognizePDF_Dialog = new function () {
 		}
 		_progressWindow = window.openDialog('chrome://zotero/content/recognizePDF.xul', '', 'chrome,close=yes,resizable=yes,dependent,dialog,centerscreen');
 		_progressWindow.addEventListener('pageshow', _onWindowLoaded.bind(this), false);
-		_updateProgress();
 	}
 	
 	function close() {
