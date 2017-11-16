@@ -492,51 +492,6 @@ Zotero.RecognizePDF = new function () {
 			}
 			
 			if (res.title) {
-				let lookupAuthors = [];
-				
-				for (let i = 0; i < 2 && i < res.authors.length; i++) {
-					let author = res.authors[i];
-					if (author.lastName) {
-						lookupAuthors.push(author.lastName);
-					}
-					else if (author.firstName) {
-						lookupAuthors.push(author.firstName);
-					}
-				}
-				
-				lookupAuthors = lookupAuthors.join(' ');
-				
-				Zotero.debug('RecognizePDF: Getting metadata by title');
-				let translate = new Zotero.Translate.Search();
-				translate.setTranslator('0a61e167-de9a-4f93-a68a-628b48855909');
-				translate.setSearch({'title': res.title, 'author': lookupAuthors});
-				try {
-					let translatedItems = await translate.translate({
-						libraryID: false,
-						saveAttachments: false
-					});
-					
-					Zotero.debug('RecognizePDF: Translated items:');
-					Zotero.debug(translatedItems);
-					for (let j = 0; j < translatedItems.length; j++) {
-						let translatedItem = translatedItems[j];
-						if (_validateMetadata(fulltext, translatedItem.title)) {
-							let newItem = new Zotero.Item;
-							newItem.fromJSON(translatedItem);
-							
-							if (!newItem.abstractNote && res.abstract) {
-								newItem.setField('abstractNote', res.abstract);
-							}
-							
-							await newItem.saveTx();
-							return newItem;
-						}
-					}
-				}
-				catch (e) {
-					Zotero.debug('RecognizePDF: ' + e);
-				}
-				
 				let newItem = new Zotero.Item('journalArticle');
 				newItem.setField('title', res.title);
 				
