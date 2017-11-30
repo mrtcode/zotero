@@ -446,8 +446,9 @@ Zotero.RecognizePDF = new function () {
 			if (!res) return null;
 			
 			for (let i = 0; i < res.identifiers.length; i++) {
-				let [type, identifier] = res.identifiers[i].split(':');
-				if (type === 'doi' && !res.title) {
+				//let [type, identifier] = res.identifiers[i].split(':');
+				let identifier = res.identifiers[i];
+				// if (type === 'doi' && !res.title) {
 					Zotero.debug('RecognizePDF: Getting metadata by DOI');
 					let translateDOI = new Zotero.Translate.Search();
 					translateDOI.setTranslator('11645bd1-0420-45c1-badb-53fb41eeb753');
@@ -463,35 +464,35 @@ Zotero.RecognizePDF = new function () {
 					catch (e) {
 						Zotero.debug('RecognizePDF: ' + e);
 					}
-				}
-				else if (type === 'isbn') {
-					Zotero.debug('RecognizePDF: Getting metadata by ISBN');
-					let translate = new Zotero.Translate.Search();
-					translate.setSearch({'itemType': 'book', 'ISBN': identifier});
-					try {
-						let translatedItems = await translate.translate({
-							libraryID: false,
-							saveAttachments: false
-						});
-						Zotero.debug('RecognizePDF: Translated items:');
-						Zotero.debug(translatedItems);
-						if (translatedItems.length) {
-							if (_validateMetadata(fulltext, translatedItems[0].title)) {
-								let newItem = new Zotero.Item;
-								newItem.fromJSON(translatedItems[0]);
-								newItem.libraryID = libraryID;
-								if (!newItem.abstractNote && res.abstract) {
-									newItem.setField('abstractNote', res.abstract);
-								}
-								newItem.saveTx();
-								return newItem;
-							}
-						}
-					}
-					catch (e) {
-						Zotero.debug('RecognizePDF: ' + e);
-					}
-				}
+				// }
+				// else if (type === 'isbn') {
+				// 	Zotero.debug('RecognizePDF: Getting metadata by ISBN');
+				// 	let translate = new Zotero.Translate.Search();
+				// 	translate.setSearch({'itemType': 'book', 'ISBN': identifier});
+				// 	try {
+				// 		let translatedItems = await translate.translate({
+				// 			libraryID: false,
+				// 			saveAttachments: false
+				// 		});
+				// 		Zotero.debug('RecognizePDF: Translated items:');
+				// 		Zotero.debug(translatedItems);
+				// 		if (translatedItems.length) {
+				// 			if (_validateMetadata(fulltext, translatedItems[0].title)) {
+				// 				let newItem = new Zotero.Item;
+				// 				newItem.fromJSON(translatedItems[0]);
+				// 				newItem.libraryID = libraryID;
+				// 				if (!newItem.abstractNote && res.abstract) {
+				// 					newItem.setField('abstractNote', res.abstract);
+				// 				}
+				// 				newItem.saveTx();
+				// 				return newItem;
+				// 			}
+				// 		}
+				// 	}
+				// 	catch (e) {
+				// 		Zotero.debug('RecognizePDF: ' + e);
+				// 	}
+				// }
 			}
 			
 			if (res.title) {
@@ -528,8 +529,7 @@ Zotero.RecognizePDF = new function () {
 				body: JSON.parse(fulltext)
 			});
 			
-			// let uri = 'http://34.201.221.255:8003/recognize';
-			let uri = 'http://localhost:8003/recognize2';
+			let uri = 'http://localhost:8003/recognize';
 			
 			let req = await Zotero.HTTP.request(
 				'POST',
