@@ -127,7 +127,7 @@ Zotero.RecognizePDF = new function () {
 			_listeners['onRowAdded'](row);
 		}
 		
-		if (_listeners['onNonEmpty'] && _rows.length===1) {
+		if (_listeners['onNonEmpty'] && _rows.length === 1) {
 			_listeners['onNonEmpty']();
 		}
 	}
@@ -257,58 +257,9 @@ Zotero.RecognizePDF = new function () {
 		
 		// Look for DOI - Use only first two pages
 		let allText = fulltext;
-		let pages = fulltext;//.split('\f');
-		// let firstChunk = pages;//.slice(0,2).join('\f');
-		// let doi = Zotero.Utilities.cleanDOI(firstChunk);
-		//
-		// if (!doi) {
-		// 	// Look for a JSTOR stable URL, which can be converted to a DOI by prepending 10.2307
-		// 	doi = firstChunk.match(/www.\jstor\.org\/stable\/(\S+)/i);
-		// 	if (doi) {
-		// 		doi = Zotero.Utilities.cleanDOI(
-		// 			doi[1].indexOf('10.') == 0 ? doi[1] : '10.2307/4383737' + doi[1]
-		// 		);
-		// 	}
-		// }
 		
 		let newItem;
-		// if (doi) {
-		// 	// Look up DOI
-		// 	Zotero.debug('RecognizePDF: Found DOI: ' + doi);
-		//
-		// 	let translateDOI = new Zotero.Translate.Search();
-		// 	translateDOI.setTranslator('11645bd1-0420-45c1-badb-53fb41eeb753');
-		// 	translateDOI.setSearch({'itemType': 'journalArticle', 'DOI': doi});
-		// 	try {
-		// 		newItem = await _promiseTranslate(translateDOI, libraryID);
-		// 		return newItem;
-		// 	}
-		// 	catch (e) {
-		// 		Zotero.debug('RecognizePDF: ' + e);
-		// 	}
-		// }
-		// else {
-		// 	Zotero.debug('RecognizePDF: No DOI found in text');
-		// }
-		//
-		// // Look for ISBNs if no DOI
-		// let isbns = _findISBNs(firstChunk);
-		// if (isbns.length) {
-		// 	Zotero.debug('RecognizePDF: Found ISBNs: ' + isbns);
-		//
-		// 	let translate = new Zotero.Translate.Search();
-		// 	translate.setSearch({'itemType': 'book', 'ISBN': isbns[0]});
-		// 	try {
-		// 		newItem = await _promiseTranslate(translate, libraryID);
-		// 		return newItem;
-		// 	}
-		// 	catch (e) {
-		// 		Zotero.debug('RecognizePDF: ' + e);
-		// 	}
-		// }
-		// else {
-		// 	Zotero.debug('RecognizePDF: No ISBN found in text');
-		// }
+		
 		
 		newItem = await _recognizerServer.findItem(fulltext, hash, libraryID);
 		if (newItem) return newItem;
@@ -325,17 +276,17 @@ Zotero.RecognizePDF = new function () {
 	function _extractText(file, pages) {
 		var cacheFile = Zotero.File.pathToFile(Zotero.DataDirectory.dir);
 		cacheFile.append("recognizePDFcache.txt");
-		if(cacheFile.exists()) {
+		if (cacheFile.exists()) {
 			cacheFile.remove(false);
 		}
 		
 		var {exec, args} = Zotero.Fulltext.getPDFConverterExecAndArgs();
-		args.push('-enc', 'UTF-8', '-bbox-layout' , '-l', pages, file.path, cacheFile.path);
+		args.push('-enc', 'UTF-8', '-bbox-layout', '-l', pages, file.path, cacheFile.path);
 		
 		Zotero.debug("RecognizePDF: Running " + exec.path + " " + args.map(arg => "'" + arg + "'").join(" "));
 		
-		return Zotero.Utilities.Internal.exec(exec, args).then(function() {
-			if(!cacheFile.exists()) {
+		return Zotero.Utilities.Internal.exec(exec, args).then(function () {
+			if (!cacheFile.exists()) {
 				throw new Zotero.Exception.Alert("recognizePDF.couldNotRead");
 			}
 			
@@ -352,23 +303,26 @@ Zotero.RecognizePDF = new function () {
 					
 					let str = {};
 					let data = '';
-						let read = 0;
-						do {
-							read = intlStream.readString(0xffffffff, str); // read as much as we can and put it in str.value
-							data += str.value;
-						} while (read != 0);
+					let read = 0;
+					do {
+						read = intlStream.readString(0xffffffff, str); // read as much as we can and put it in str.value
+						data += str.value;
+					}
+					while (read != 0);
 					
-						Zotero.debug(data);
+					Zotero.debug(data);
 					return data;
-				} finally {
+				}
+				finally {
 					inputStream.close();
 				}
-			} finally {
+			}
+			finally {
 				cacheFile.remove(false);
 			}
 			
 			return lines;
-		}, function() {
+		}, function () {
 			throw new Zotero.Exception.Alert("recognizePDF.couldNotRead");
 		});
 	}
@@ -397,46 +351,6 @@ Zotero.RecognizePDF = new function () {
 		throw new Error('No items found');
 	}
 	
-	/**
-	 * Search ISBNs in text
-	 * @private
-	 * @return {String[]} Array of ISBNs
-	 */
-	function _findISBNs(x) {
-		if (typeof(x) !== 'string') {
-			throw 'findISBNs: argument must be a string';
-		}
-		let isbns = [];
-		
-		// Match lines saying 'isbn: ' or 'ISBN-10:' or similar, consider m-dashes and n-dashes as well
-		let pattern = /(SBN|sbn)[ \u2014\u2013\u2012-]?(10|13)?[: ]*([0-9X][0-9X \u2014\u2013\u2012-]+)/g;
-		let match;
-		
-		while (match = pattern.exec(x)) {
-			let isbn = match[3];
-			isbn = isbn.replace(/[ \u2014\u2013\u2012-]/g, '');
-			if (isbn.length === 20 || isbn.length === 26) {
-				// Handle the case of two isbns (e.g. paper+hardback) next to each other
-				isbns.push(isbn.slice(0, isbn.length / 2), isbn.slice(isbn.length / 2));
-			}
-			else if (isbn.length === 23) {
-				// Handle the case of two isbns (10+13) next to each other
-				isbns.push(isbn.slice(0, 10), isbn.slice(10));
-			}
-			else if (isbn.length === 10 || isbn.length === 13) {
-				isbns.push(isbn);
-			}
-		}
-		
-		// Validate ISBNs
-		let validIsbns = [], cleanISBN;
-		for (let i = 0; i < isbns.length; i++) {
-			cleanISBN = Zotero.Utilities.cleanISBN(isbns[i]);
-			if (cleanISBN) validIsbns.push(cleanISBN);
-		}
-		return validIsbns;
-	}
-	
 	let _recognizerServer = new function () {
 		this.findItem = findItem;
 		
@@ -445,57 +359,51 @@ Zotero.RecognizePDF = new function () {
 			let res = await _query(hash, fulltext);
 			if (!res) return null;
 			
-			for (let i = 0; i < res.identifiers.length; i++) {
-				//let [type, identifier] = res.identifiers[i].split(':');
-				let identifier = res.identifiers[i];
-				// if (type === 'doi' && !res.title) {
-					Zotero.debug('RecognizePDF: Getting metadata by DOI');
-					let translateDOI = new Zotero.Translate.Search();
-					translateDOI.setTranslator('11645bd1-0420-45c1-badb-53fb41eeb753');
-					translateDOI.setSearch({'itemType': 'journalArticle', 'DOI': identifier});
-					try {
-						let newItem = await _promiseTranslate(translateDOI, libraryID);
+			if (res.doi) {
+				Zotero.debug('RecognizePDF: Getting metadata by DOI');
+				let translateDOI = new Zotero.Translate.Search();
+				translateDOI.setTranslator('11645bd1-0420-45c1-badb-53fb41eeb753');
+				translateDOI.setSearch({'itemType': 'journalArticle', 'DOI': res.doi});
+				try {
+					let newItem = await _promiseTranslate(translateDOI, libraryID);
+					if (!newItem.abstractNote && res.abstract) {
+						newItem.setField('abstractNote', res.abstract);
+					}
+					newItem.saveTx();
+					return newItem;
+				}
+				catch (e) {
+					Zotero.debug('RecognizePDF: ' + e);
+				}
+			}
+			else if (res.isbn) {
+				Zotero.debug('RecognizePDF: Getting metadata by ISBN');
+				let translate = new Zotero.Translate.Search();
+				translate.setSearch({'itemType': 'book', 'ISBN': res.isbn});
+				try {
+					let translatedItems = await translate.translate({
+						libraryID: false,
+						saveAttachments: false
+					});
+					Zotero.debug('RecognizePDF: Translated items:');
+					Zotero.debug(translatedItems);
+					if (translatedItems.length) {
+						let newItem = new Zotero.Item;
+						newItem.fromJSON(translatedItems[0]);
+						newItem.libraryID = libraryID;
 						if (!newItem.abstractNote && res.abstract) {
 							newItem.setField('abstractNote', res.abstract);
 						}
 						newItem.saveTx();
 						return newItem;
 					}
-					catch (e) {
-						Zotero.debug('RecognizePDF: ' + e);
-					}
-				// }
-				// else if (type === 'isbn') {
-				// 	Zotero.debug('RecognizePDF: Getting metadata by ISBN');
-				// 	let translate = new Zotero.Translate.Search();
-				// 	translate.setSearch({'itemType': 'book', 'ISBN': identifier});
-				// 	try {
-				// 		let translatedItems = await translate.translate({
-				// 			libraryID: false,
-				// 			saveAttachments: false
-				// 		});
-				// 		Zotero.debug('RecognizePDF: Translated items:');
-				// 		Zotero.debug(translatedItems);
-				// 		if (translatedItems.length) {
-				// 			if (_validateMetadata(fulltext, translatedItems[0].title)) {
-				// 				let newItem = new Zotero.Item;
-				// 				newItem.fromJSON(translatedItems[0]);
-				// 				newItem.libraryID = libraryID;
-				// 				if (!newItem.abstractNote && res.abstract) {
-				// 					newItem.setField('abstractNote', res.abstract);
-				// 				}
-				// 				newItem.saveTx();
-				// 				return newItem;
-				// 			}
-				// 		}
-				// 	}
-				// 	catch (e) {
-				// 		Zotero.debug('RecognizePDF: ' + e);
-				// 	}
-				// }
+					
+				}
+				catch (e) {
+					Zotero.debug('RecognizePDF: ' + e);
+				}
 			}
-			
-			if (res.title) {
+			else if (res.title) {
 				let newItem = new Zotero.Item('journalArticle');
 				newItem.setField('title', res.title);
 				
@@ -545,59 +453,10 @@ Zotero.RecognizePDF = new function () {
 			);
 			
 			let json = JSON.parse(req.responseText);
-			if (json.title || json.identifiers) {
-				return json;
-			}
 			
-			return null;
+			return json;
 		}
 		
-		function _processText(text) {
-			let rx = Zotero.Utilities.XRegExp('[^\\pL\n]', 'g');
-			text = Zotero.Utilities.XRegExp.replace(text, rx, '');
-			text = text.normalize('NFKD');
-			text = Zotero.Utilities.XRegExp.replace(text, rx, '');
-			text = text.toLowerCase();
-			
-			let linesMap = [];
-			let prevIsLine = false;
-			for (let i = 0; i < text.length; i++) {
-				if (text.charAt(i) === '\n') {
-					prevIsLine = true;
-				}
-				else {
-					linesMap.push(prevIsLine);
-					prevIsLine = false;
-				}
-			}
-			
-			text = text.replace(/\n/g, '');
-			
-			return {
-				linesMap,
-				text
-			}
-		}
 		
-		function _validateMetadata(fulltext, title) {
-			let processedFulltext = _processText(fulltext);
-			
-			title = Zotero.Utilities.unescapeHTML(title);
-			
-			let columnIndex = title.indexOf(':');
-			if (columnIndex >= 30) title = title.slice(0, columnIndex);
-			let processedTitle = _processText(title);
-			
-			let titleIndex;
-			// There can be multiple occurrences of title
-			while ((titleIndex = processedFulltext.text.indexOf(processedTitle.text, titleIndex + 1)) >= 0) {
-				if (titleIndex === 0 || titleIndex > 0 && processedFulltext.linesMap[titleIndex]) {
-					return true;
-				}
-			}
-			
-			Zotero.debug('RecognizePDF: Title is invalid: ' + title);
-			return false;
-		}
 	};
 };
