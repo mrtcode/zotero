@@ -437,7 +437,7 @@ Zotero.RecognizePDF = new function () {
 				body: JSON.parse(fulltext)
 			});
 			
-			let uri = 'http://localhost:8003/recognize';
+			let uri = 'http://62.210.116.165:8003/recognize';
 			
 			let req = await Zotero.HTTP.request(
 				'POST',
