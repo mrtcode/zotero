@@ -210,7 +210,7 @@ Zotero.RecognizePDF = new function () {
 		
 		_queueProcessing = false;
 	}
-	
+
 	async function _processItem(itemID) {
 		let item = await Zotero.Items.getAsync(itemID);
 		
@@ -403,8 +403,16 @@ Zotero.RecognizePDF = new function () {
 					Zotero.debug('RecognizePDF: ' + e);
 				}
 			}
-			else if (res.title) {
-				let newItem = new Zotero.Item('journalArticle');
+			
+			if (res.title) {
+				
+				let type = 'journalArticle';
+				
+				if(res.type=='book-chapter') {
+					type = 'bookSection';
+				}
+				
+				let newItem = new Zotero.Item(type);
 				newItem.setField('title', res.title);
 				
 				let creators = [];
@@ -421,6 +429,16 @@ Zotero.RecognizePDF = new function () {
 				
 				if (res.abstract) newItem.setField('abstractNote', res.abstract);
 				if (res.year) newItem.setField('date', res.year);
+				if (res.pages) newItem.setField('pages', res.pages);
+				if (res.volume) newItem.setField('volume', res.volume);
+				
+				if(type=='journalArticle') {
+					if (res.issue) newItem.setField('issue', res.issue);
+					if (res.issn) newItem.setField('issn', res.issn);
+					if (res.container) newItem.setField('publicationTitle', res.container);
+				} else if(type=='bookSection') {
+					if (res.container) newItem.setField('bookTitle', res.container);
+				}
 				
 				newItem.setField('libraryCatalog', 'Zotero Metadata Service');
 				
