@@ -431,6 +431,7 @@ Zotero.RecognizePDF = new function () {
 				if (res.year) newItem.setField('date', res.year);
 				if (res.pages) newItem.setField('pages', res.pages);
 				if (res.volume) newItem.setField('volume', res.volume);
+				if (res.url) newItem.setField('url', res.url);
 				
 				if(type=='journalArticle') {
 					if (res.issue) newItem.setField('issue', res.issue);
