@@ -434,10 +434,11 @@ Zotero.RecognizePDF = new function () {
 				
 				if(type=='journalArticle') {
 					if (res.issue) newItem.setField('issue', res.issue);
-					if (res.issn) newItem.setField('issn', res.issn);
+					if (res.ISSN) newItem.setField('issn', res.issn);
 					if (res.container) newItem.setField('publicationTitle', res.container);
 				} else if(type=='bookSection') {
 					if (res.container) newItem.setField('bookTitle', res.container);
+					if (res.publisher) newItem.setField('publisher', res.publisher);
 				}
 				
 				newItem.setField('libraryCatalog', 'Zotero Metadata Service');
