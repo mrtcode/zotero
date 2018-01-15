@@ -58,8 +58,8 @@ Zotero.RecognizePDF = new function () {
 	 * @returns {Boolean} True if the PDF can be recognized, false if it cannot be
 	 */
 	function canRecognize(/**Zotero.Item*/ item) {
-		return item.attachmentMIMEType
-			&& item.attachmentMIMEType === 'application/pdf'
+		return item.attachmentContentType
+			&& item.attachmentContentType === 'application/pdf'
 			&& item.isTopLevelItem();
 	}
 	
@@ -210,7 +210,7 @@ Zotero.RecognizePDF = new function () {
 		
 		_queueProcessing = false;
 	}
-
+	
 	async function _processItem(itemID) {
 		let item = await Zotero.Items.getAsync(itemID);
 		
@@ -241,47 +241,20 @@ Zotero.RecognizePDF = new function () {
 	}
 	
 	/**
-	 * Retrieves metadata for a PDF and saves it as an item
-	 *
-	 * @param {Zotero.Item} item
-	 * @return {Promise} A promise resolved when PDF metadata has been retrieved
-	 */
-	async function _recognize(item) {
-		
-		let file = item.getFile();
-		
-		let hash = await item.attachmentHash;
-		let fulltext = await _extractText(file, 5);
-		
-		let libraryID = item.libraryID;
-		
-		// Look for DOI - Use only first two pages
-		let allText = fulltext;
-		
-		let newItem;
-		
-		
-		newItem = await _recognizerServer.findItem(fulltext, hash, libraryID);
-		if (newItem) return newItem;
-		
-		return null;
-	}
-	
-	/**
 	 * Get text from a PDF
 	 * @param {nsIFile} file PDF
 	 * @param {Number} pages Number of pages to extract
 	 * @return {Promise}
 	 */
-	function _extractText(file, pages) {
-		var cacheFile = Zotero.File.pathToFile(Zotero.DataDirectory.dir);
+	function _extractJson(filePath, pages) {
+		let cacheFile = Zotero.File.pathToFile(Zotero.DataDirectory.dir);
 		cacheFile.append("recognizePDFcache.txt");
 		if (cacheFile.exists()) {
 			cacheFile.remove(false);
 		}
 		
-		var {exec, args} = Zotero.Fulltext.getPDFConverterExecAndArgs();
-		args.push('-enc', 'UTF-8', '-bbox-layout', '-l', pages, file.path, cacheFile.path);
+		let {exec, args} = Zotero.Fulltext.getPDFConverterExecAndArgs();
+		args.push('-enc', 'UTF-8', '-bbox-layout', '-l', pages, filePath, cacheFile.path);
 		
 		Zotero.debug("RecognizePDF: Running " + exec.path + " " + args.map(arg => "'" + arg + "'").join(" "));
 		
@@ -291,11 +264,11 @@ Zotero.RecognizePDF = new function () {
 			}
 			
 			try {
-				var inputStream = Components.classes["@mozilla.org/network/file-input-stream;1"]
+				let inputStream = Components.classes["@mozilla.org/network/file-input-stream;1"]
 					.createInstance(Components.interfaces.nsIFileInputStream);
 				inputStream.init(cacheFile, 0x01, 0o664, 0);
 				try {
-					var intlStream = Components.classes["@mozilla.org/intl/converter-input-stream;1"]
+					let intlStream = Components.classes["@mozilla.org/intl/converter-input-stream;1"]
 						.createInstance(Components.interfaces.nsIConverterInputStream);
 					intlStream.init(inputStream, "UTF-8", 65535,
 						Components.interfaces.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER);
@@ -308,7 +281,7 @@ Zotero.RecognizePDF = new function () {
 						read = intlStream.readString(0xffffffff, str); // read as much as we can and put it in str.value
 						data += str.value;
 					}
-					while (read != 0);
+					while (read !== 0);
 					
 					Zotero.debug(data);
 					return data;
@@ -351,132 +324,133 @@ Zotero.RecognizePDF = new function () {
 		throw new Error('No items found');
 	}
 	
-	let _recognizerServer = new function () {
-		this.findItem = findItem;
+	async function _query(json) {
+		let uri = 'http://62.210.116.165:8003/recognize';
 		
-		async function findItem(fulltext, hash, libraryID) {
-			
-			let res = await _query(hash, fulltext);
-			if (!res) return null;
-			
-			if (res.doi) {
-				Zotero.debug('RecognizePDF: Getting metadata by DOI');
-				let translateDOI = new Zotero.Translate.Search();
-				translateDOI.setTranslator('11645bd1-0420-45c1-badb-53fb41eeb753');
-				translateDOI.setSearch({'itemType': 'journalArticle', 'DOI': res.doi});
-				try {
-					let newItem = await _promiseTranslate(translateDOI, libraryID);
+		let req = await Zotero.HTTP.request(
+			'POST',
+			uri,
+			{
+				successCodes: [200],
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				debug: true,
+				body: json
+			}
+		);
+		
+		return JSON.parse(req.responseText);
+	}
+	
+	/**
+	 * Retrieves metadata for a PDF and saves it as an item
+	 *
+	 * @param {Zotero.Item} item
+	 * @return {Promise} A promise resolved when PDF metadata has been retrieved
+	 */
+	async function _recognize(item) {
+		
+		let filePath = await item.getFilePath();
+		let json = await _extractJson(filePath, 5);
+		
+		let libraryID = item.libraryID;
+		
+		let res = await _query(json);
+		if (!res) return null;
+		
+		if (res.doi) {
+			Zotero.debug('RecognizePDF: Getting metadata by DOI');
+			let translateDOI = new Zotero.Translate.Search();
+			translateDOI.setTranslator('11645bd1-0420-45c1-badb-53fb41eeb753');
+			translateDOI.setSearch({'itemType': 'journalArticle', 'DOI': res.doi});
+			try {
+				let newItem = await _promiseTranslate(translateDOI, libraryID);
+				if (!newItem.abstractNote && res.abstract) {
+					newItem.setField('abstractNote', res.abstract);
+				}
+				newItem.saveTx();
+				return newItem;
+			}
+			catch (e) {
+				Zotero.debug('RecognizePDF: ' + e);
+			}
+		}
+		
+		if (res.isbn) {
+			Zotero.debug('RecognizePDF: Getting metadata by ISBN');
+			let translate = new Zotero.Translate.Search();
+			translate.setSearch({'itemType': 'book', 'ISBN': res.isbn});
+			try {
+				let translatedItems = await translate.translate({
+					libraryID: false,
+					saveAttachments: false
+				});
+				Zotero.debug('RecognizePDF: Translated items:');
+				Zotero.debug(translatedItems);
+				if (translatedItems.length) {
+					let newItem = new Zotero.Item;
+					newItem.fromJSON(translatedItems[0]);
+					newItem.libraryID = libraryID;
 					if (!newItem.abstractNote && res.abstract) {
 						newItem.setField('abstractNote', res.abstract);
 					}
 					newItem.saveTx();
 					return newItem;
 				}
-				catch (e) {
-					Zotero.debug('RecognizePDF: ' + e);
-				}
+				
 			}
-			else if (res.isbn) {
-				Zotero.debug('RecognizePDF: Getting metadata by ISBN');
-				let translate = new Zotero.Translate.Search();
-				translate.setSearch({'itemType': 'book', 'ISBN': res.isbn});
-				try {
-					let translatedItems = await translate.translate({
-						libraryID: false,
-						saveAttachments: false
-					});
-					Zotero.debug('RecognizePDF: Translated items:');
-					Zotero.debug(translatedItems);
-					if (translatedItems.length) {
-						let newItem = new Zotero.Item;
-						newItem.fromJSON(translatedItems[0]);
-						newItem.libraryID = libraryID;
-						if (!newItem.abstractNote && res.abstract) {
-							newItem.setField('abstractNote', res.abstract);
-						}
-						newItem.saveTx();
-						return newItem;
-					}
-					
-				}
-				catch (e) {
-					Zotero.debug('RecognizePDF: ' + e);
-				}
+			catch (e) {
+				Zotero.debug('RecognizePDF: ' + e);
 			}
-			
-			if (res.title) {
-				
-				let type = 'journalArticle';
-				
-				if(res.type=='book-chapter') {
-					type = 'bookSection';
-				}
-				
-				let newItem = new Zotero.Item(type);
-				newItem.setField('title', res.title);
-				
-				let creators = [];
-				for (let i = 0; i < res.authors.length; i++) {
-					let author = res.authors[i];
-					creators.push({
-						firstName: author.firstName,
-						lastName: author.lastName,
-						creatorType: 'author'
-					})
-				}
-				
-				newItem.setCreators(creators);
-				
-				if (res.abstract) newItem.setField('abstractNote', res.abstract);
-				if (res.year) newItem.setField('date', res.year);
-				if (res.pages) newItem.setField('pages', res.pages);
-				if (res.volume) newItem.setField('volume', res.volume);
-				if (res.url) newItem.setField('url', res.url);
-				
-				if(type=='journalArticle') {
-					if (res.issue) newItem.setField('issue', res.issue);
-					if (res.ISSN) newItem.setField('issn', res.issn);
-					if (res.container) newItem.setField('publicationTitle', res.container);
-				} else if(type=='bookSection') {
-					if (res.container) newItem.setField('bookTitle', res.container);
-					if (res.publisher) newItem.setField('publisher', res.publisher);
-				}
-				
-				newItem.setField('libraryCatalog', 'Zotero Metadata Service');
-				
-				await newItem.saveTx();
-				return newItem;
-			}
-			
-			return null;
 		}
 		
-		async function _query(hash, fulltext) {
-			let body = JSON.stringify({
-				hash: hash,
-				body: JSON.parse(fulltext)
-			});
+		if (res.title) {
 			
-			let uri = 'http://62.210.116.165:8003/recognize';
+			let type = 'journalArticle';
 			
-			let req = await Zotero.HTTP.request(
-				'POST',
-				uri,
-				{
-					successCodes: [200],
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					debug: true,
-					body: body
-				}
-			);
+			if (res.type === 'book-chapter') {
+				type = 'bookSection';
+			}
 			
-			let json = JSON.parse(req.responseText);
+			let newItem = new Zotero.Item(type);
+			newItem.setField('title', res.title);
 			
-			return json;
+			let creators = [];
+			for (let i = 0; i < res.authors.length; i++) {
+				let author = res.authors[i];
+				creators.push({
+					firstName: author.firstName,
+					lastName: author.lastName,
+					creatorType: 'author'
+				})
+			}
+			
+			newItem.setCreators(creators);
+			
+			if (res.abstract) newItem.setField('abstractNote', res.abstract);
+			if (res.year) newItem.setField('date', res.year);
+			if (res.pages) newItem.setField('pages', res.pages);
+			if (res.volume) newItem.setField('volume', res.volume);
+			if (res.url) newItem.setField('url', res.url);
+			
+			if (type === 'journalArticle') {
+				if (res.issue) newItem.setField('issue', res.issue);
+				if (res.ISSN) newItem.setField('issn', res.issn);
+				if (res.container) newItem.setField('publicationTitle', res.container);
+			}
+			else if (type === 'bookSection') {
+				if (res.container) newItem.setField('bookTitle', res.container);
+				if (res.publisher) newItem.setField('publisher', res.publisher);
+			}
+			
+			newItem.setField('libraryCatalog', 'Zotero Metadata Service');
+			
+			await newItem.saveTx();
+			return newItem;
 		}
 		
-		
-	};
+		return null;
+	}
 };
+
