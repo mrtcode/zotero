@@ -138,7 +138,6 @@ let Zotero_RecognizePDF_Dialog = new function () {
 			_rowIDs.push(row.id);
 			let treeitem = _rowToTreeItem(row);
 			treechildren.appendChild(treeitem);
-			
 			_updateProgress();
 		});
 		
@@ -160,18 +159,17 @@ let Zotero_RecognizePDF_Dialog = new function () {
 	}
 	
 	function _updateProgress() {
-		if(!_progressWindow) return;
+		if (!_progressWindow) return;
 		let total = Zotero.RecognizePDF.getTotal();
 		let processed = Zotero.RecognizePDF.getProcessed();
 		_progressIndicator.value = processed * 100 / total;
-		if(processed === total) {
-			// Todo: add multilingual string
-			_progressWindow.document.getElementById("cancel-button").label = 'Clear';
-			_progressWindow.document.getElementById("label").value = 'Metadata Retrieval Complete'
-		} else {
-			// Todo: add multilingual string
-			_progressWindow.document.getElementById("cancel-button").label = 'Cancel';
-			_progressWindow.document.getElementById("label").value = 'Retrieving Metadata..'
+		if (processed === total) {
+			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('recognizePDF.clear.label');
+			_progressWindow.document.getElementById("label").value = Zotero.getString('recognizePDF.complete.label');
+		}
+		else {
+			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('recognizePDF.cancel.label');
+			_progressWindow.document.getElementById("label").value = Zotero.getString('recognizePDF.recognizing.label');
 		}
 	}
 	

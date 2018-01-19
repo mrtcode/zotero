@@ -623,7 +623,7 @@
 }
 
 #zotero-tb-recognize {
-	list-style-image: url(chrome://zotero/skin/treeitem.png);
+	list-style-image: url(chrome://zotero/skin/document-search-result.png);
 }
 
 /* Sync error icon */
