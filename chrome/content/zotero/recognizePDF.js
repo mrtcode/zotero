@@ -1,7 +1,7 @@
 /*
     ***** BEGIN LICENSE BLOCK *****
     
-    Copyright © 2009 Center for History and New Media
+    Copyright © 2018 Center for History and New Media
                      George Mason University, Fairfax, Virginia, USA
                      http://zotero.org
     
@@ -37,27 +37,24 @@ let Zotero_RecognizePDF_Dialog = new function () {
 	const FAILURE_IMAGE = 'chrome://zotero/skin/cross.png';
 	const LOADING_IMAGE = 'chrome://zotero/skin/arrow_refresh.png';
 	
-	this.open = open;
-	this.close = close;
-	
 	let _progressWindow = null;
 	let _progressIndicator = null;
 	let _rowIDs = [];
 	
-	function open() {
+	this.open = function() {
 		if (_progressWindow) {
 			_progressWindow.focus();
 			return;
 		}
 		_progressWindow = window.openDialog('chrome://zotero/content/recognizePDF.xul', '', 'chrome,close=yes,resizable=yes,dependent,dialog,centerscreen');
 		_progressWindow.addEventListener('pageshow', _onWindowLoaded.bind(this), false);
-	}
+	};
 	
 	function close() {
 		if (!_progressWindow) return;
-		Zotero.RecognizePDF.removeListener('onRowAdded');
-		Zotero.RecognizePDF.removeListener('onRowUpdated');
-		Zotero.RecognizePDF.removeListener('onRowDeleted');
+		Zotero.RecognizePDF.removeListener('rowadded');
+		Zotero.RecognizePDF.removeListener('rowupdated');
+		Zotero.RecognizePDF.removeListener('rowdeleted');
 		_progressWindow.close();
 		_progressWindow = null;
 		_progressIndicator = null;
@@ -107,8 +104,7 @@ let Zotero_RecognizePDF_Dialog = new function () {
 		_rowIDs = [];
 		let treechildren = _progressWindow.document.getElementById('treechildren');
 		
-		for (let i = 0; i < rows.length; i++) {
-			let row = rows[i];
+		for (let row of rows) {
 			_rowIDs.push(row.id);
 			let treeitem = _rowToTreeItem(row);
 			treechildren.appendChild(treeitem);
@@ -134,14 +130,14 @@ let Zotero_RecognizePDF_Dialog = new function () {
 		
 		_updateProgress();
 		
-		Zotero.RecognizePDF.addListener('onRowAdded', function (row) {
+		Zotero.RecognizePDF.addListener('rowadded', function (row) {
 			_rowIDs.push(row.id);
 			let treeitem = _rowToTreeItem(row);
 			treechildren.appendChild(treeitem);
 			_updateProgress();
 		});
 		
-		Zotero.RecognizePDF.addListener('onRowUpdated', function (row) {
+		Zotero.RecognizePDF.addListener('rowupdated', function (row) {
 			let itemIcon = _progressWindow.document.getElementById('item-' + row.id + '-icon');
 			let itemTitle = _progressWindow.document.getElementById('item-' + row.id + '-title');
 			
@@ -150,7 +146,7 @@ let Zotero_RecognizePDF_Dialog = new function () {
 			_updateProgress();
 		});
 		
-		Zotero.RecognizePDF.addListener('onRowDeleted', function (row) {
+		Zotero.RecognizePDF.addListener('rowdeleted', function (row) {
 			_rowIDs.splice(_rowIDs.indexOf(row.id), 1);
 			let treeitem = _progressWindow.document.getElementById('item-' + row.id);
 			treeitem.parentNode.removeChild(treeitem);
@@ -161,14 +157,14 @@ let Zotero_RecognizePDF_Dialog = new function () {
 	function _updateProgress() {
 		if (!_progressWindow) return;
 		let total = Zotero.RecognizePDF.getTotal();
-		let processed = Zotero.RecognizePDF.getProcessed();
+		let processed = Zotero.RecognizePDF.getProcessedTotal();
 		_progressIndicator.value = processed * 100 / total;
 		if (processed === total) {
-			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('recognizePDF.clear.label');
+			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('general.cancel');
 			_progressWindow.document.getElementById("label").value = Zotero.getString('recognizePDF.complete.label');
 		}
 		else {
-			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('recognizePDF.cancel.label');
+			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('general.cancel');
 			_progressWindow.document.getElementById("label").value = Zotero.getString('recognizePDF.recognizing.label');
 		}
 	}

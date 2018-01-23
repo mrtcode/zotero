@@ -101,6 +101,7 @@ const xpcomFilesLocal = [
 	'mime',
 	'notifier',
 	'quickCopy',
+	'recognizePDF',
 	'report',
 	'router',
 	'schema',
@@ -131,8 +132,7 @@ const xpcomFilesLocal = [
 	'users',
 	'translation/translate_item',
 	'translation/translators',
-	'server_connector',
-	'recognizePDF'
+	'server_connector'
 ];
 
 /** XPCOM files to be loaded only for connector translation and DB access **/
