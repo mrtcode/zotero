@@ -326,7 +326,7 @@
 					<menuitem class="menuitem-iconic zotero-menuitem-create-bibliography" oncommand="Zotero_File_Interface.bibliographyFromItems();"/>
 					<menuitem class="menuitem-iconic zotero-menuitem-create-report" oncommand="Zotero_Report_Interface.loadItemReport(event)"/>
 					<menuseparator/>
-					<menuitem class="menuitem-iconic zotero-menuitem-retrieve-metadata" oncommand="Zotero.RecognizePDF.recognizeItems(ZoteroPane.getSelectedItems()); Zotero_RecognizePDF_Dialog.open();"/>
+					<menuitem class="menuitem-iconic zotero-menuitem-retrieve-metadata" oncommand="ZoteroPane.recognizeSelected();"/>
 					<menuitem class="menuitem-iconic zotero-menuitem-create-parent" oncommand="ZoteroPane_Local.createParentItemsFromSelected();"/>
 					<menuitem class="menuitem-iconic zotero-menuitem-rename-from-parent" oncommand="ZoteroPane_Local.renameSelectedAttachmentsFromParents()"/>
 					<menuitem class="menuitem-iconic zotero-menuitem-reindex" oncommand="ZoteroPane_Local.reindexItem();"/>

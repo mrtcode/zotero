@@ -85,11 +85,11 @@ var ZoteroPane = new function()
 		// Set key down handler
 		document.getElementById('appcontent').addEventListener('keydown', ZoteroPane_Local.handleKeyDown, true);
 		
-		Zotero.RecognizePDF.addListener('onEmpty', function (row) {
+		Zotero.RecognizePDF.addListener('empty', function (row) {
 			document.getElementById('zotero-tb-recognize').hidden = true;
 		});
 		
-		Zotero.RecognizePDF.addListener('onNonEmpty', function (row) {
+		Zotero.RecognizePDF.addListener('nonempty', function (row) {
 			document.getElementById('zotero-tb-recognize').hidden = false;
 		});
 		
@@ -4915,6 +4915,11 @@ var ZoteroPane = new function()
 	this.addBeforeReloadListener = function(/** @param {Function} **/func) {
 		if(_beforeReloadFunctions.indexOf(func) === -1) _beforeReloadFunctions.push(func);
 	}
+	
+	this.recognizeSelected = function() {
+		Zotero.RecognizePDF.recognizeItems(ZoteroPane.getSelectedItems());
+		Zotero_RecognizePDF_Dialog.open();
+	};
 	
 	/**
 	 * Implements nsIObserver for Zotero reload
