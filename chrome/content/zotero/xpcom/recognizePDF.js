@@ -323,7 +323,7 @@ Zotero.RecognizePDF = new function () {
 	}
 	
 	async function _query(json) {
-		let uri = ZOTERO_CONFIG.API_URL + '/recognize';
+		let uri = 'http://62.210.116.165:8003/recognize';
 		
 		let client = Zotero.Sync.Runner.getAPIClient();
 		
