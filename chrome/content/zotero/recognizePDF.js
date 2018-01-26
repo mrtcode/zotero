@@ -160,7 +160,7 @@ let Zotero_RecognizePDF_Dialog = new function () {
 		let processed = Zotero.RecognizePDF.getProcessedTotal();
 		_progressIndicator.value = processed * 100 / total;
 		if (processed === total) {
-			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('general.cancel');
+			_progressWindow.document.getElementById("cancel-button").label = Zotero.getString('general.clear');
 			_progressWindow.document.getElementById("label").value = Zotero.getString('recognizePDF.complete.label');
 		}
 		else {

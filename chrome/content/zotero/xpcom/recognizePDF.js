@@ -289,7 +289,7 @@ Zotero.RecognizePDF = new function () {
 			await Zotero.Utilities.Internal.exec(exec, args);
 			let content = await Zotero.File.getContentsAsync(cacheFile.path);
 			cacheFile.remove(false);
-			return content;
+			return JSON.parse(content);
 		}
 		catch (e) {
 			Zotero.logError(e);
@@ -336,7 +336,7 @@ Zotero.RecognizePDF = new function () {
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: json,
+					body: JSON.stringify(json),
 					noAPIKey: true
 				}
 			);
@@ -356,6 +356,18 @@ Zotero.RecognizePDF = new function () {
 	async function _recognize(item) {
 		let filePath = await item.getFilePath();
 		let json = await extractJSON(filePath, MAX_PAGES);
+		
+		let containingTextPages = 0;
+		
+		for(let page of json.pages) {
+			if(page[2].length) {
+				containingTextPages++;
+			}
+		}
+		
+		if(!containingTextPages) {
+			throw new Zotero.Exception.Alert('recognizePDF.noOCR');
+		}
 		
 		let libraryID = item.libraryID;
 		
