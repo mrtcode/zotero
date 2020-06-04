@@ -56,4 +56,7 @@ function i(name, svgOrSrc, hasDPI=true) {
 i('TagSelectorMenu', "chrome://zotero/skin/tag-selector-menu.png")
 i('DownChevron', "chrome://zotero/skin/searchbar-dropmarker.png")
 i('Xmark', "chrome://zotero/skin/xmark.png")
+i('Tick', "chrome://zotero/skin/tick.png")
+i('Cross', "chrome://zotero/skin/cross.png")
+i('ArrowRefresh', "chrome://zotero/skin/arrow_refresh.png")
 
