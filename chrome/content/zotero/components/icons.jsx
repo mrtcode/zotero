@@ -59,4 +59,6 @@ i('Xmark', "chrome://zotero/skin/xmark.png")
 i('Tick', "chrome://zotero/skin/tick.png")
 i('Cross', "chrome://zotero/skin/cross.png")
 i('ArrowRefresh', "chrome://zotero/skin/arrow_refresh.png")
+i('PuzzleArrow', "chrome://zotero/skin/puzzle-arrow.png")
+i('BulletBlueEmpty', "chrome://zotero/skin/bullet_blue_empty.png")
 
