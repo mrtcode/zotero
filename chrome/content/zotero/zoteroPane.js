@@ -2756,6 +2756,7 @@ var ZoteroPane = new function()
 			'addAttachments',
 			'sep2',
 			'findPDF',
+			'updateMetadata',
 			'sep3',
 			'toggleRead',
 			'duplicateItem',
@@ -2772,7 +2773,6 @@ var ZoteroPane = new function()
 			'recognizePDF',
 			'unrecognize',
 			'reportMetadata',
-			'updateMetadata',
 			'createParent',
 			'renameAttachments',
 			'reindexItem',
@@ -2875,10 +2875,6 @@ var ZoteroPane = new function()
 					show.push(m.unrecognize);
 				}
 				
-				if (canUpdateMetadata) {
-					show.push(m.updateMetadata);
-				}
-				
 				if (canMarkRead) {
 					show.push(m.toggleRead);
 					if (markUnread) {
@@ -2888,12 +2884,23 @@ var ZoteroPane = new function()
 					}
 				}
 				
+				let showSep3 = false;
 				// "Find Available PDFs"
 				if (collectionTreeRow.filesEditable
 						&& !collectionTreeRow.isDuplicates()
 						&& !collectionTreeRow.isFeed()
 						&& items.some(item => item.isRegularItem())) {
-					show.push(m.findPDF, m.sep3);
+					show.push(m.findPDF);
+					showSep3 = true;
+				}
+
+				if (canUpdateMetadata) {
+					show.push(m.updateMetadata);
+					showSep3 = true;
+				}
+				
+				if (showSep3) {
+					show.push(m.sep3);
 				}
 
 				let canCreateParent = true;
@@ -2978,16 +2985,23 @@ var ZoteroPane = new function()
 						}
 					}
 					
+					let showSep3 = false;
 					if (Zotero.Attachments.canFindPDFForItem(item)) {
-						show.push(m.findPDF, m.sep3);
+						show.push(m.findPDF);
+						showSep3 = true;
+					}
+
+					if (Zotero.UpdateMetadata.canUpdate(item)) {
+						show.push(m.updateMetadata);
+						showSep3 = true;
+					}
+					
+					if (showSep3) {
+						show.push(m.sep3);
 					}
 					
 					if (Zotero.RecognizePDF.canUnrecognize(item)) {
 						show.push(m.sep5, m.unrecognize, m.reportMetadata);
-					}
-					
-					if (Zotero.UpdateMetadata.canUpdate(item)) {
-						show.push(m.updateMetadata);
 					}
 					
 					if (item.isAttachment()) {
@@ -3100,6 +3114,7 @@ var ZoteroPane = new function()
 		
 		// Set labels, plural if necessary
 		menu.childNodes[m.findPDF].setAttribute('label', Zotero.getString('pane.items.menu.findAvailablePDF' + multiple));
+		menu.childNodes[m.updateMetadata].setAttribute('label', Zotero.getString('pane.items.menu.updateMetadata' + multiple));
 		menu.childNodes[m.moveToTrash].setAttribute('label', Zotero.getString('pane.items.menu.moveToTrash' + multiple));
 		menu.childNodes[m.deleteFromLibrary].setAttribute('label', Zotero.getString('pane.items.menu.delete' + multiple));
 		menu.childNodes[m.exportItems].setAttribute('label', Zotero.getString('pane.items.menu.export' + multiple));
