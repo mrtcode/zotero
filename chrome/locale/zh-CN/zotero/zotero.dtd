@@ -22,7 +22,10 @@
 <!ENTITY zotero.general.bigger "更大">
 <!ENTITY zotero.general.smaller "更小">
 <!ENTITY zotero.general.reset "重置">
-
+<!ENTITY zotero.general.done "完成">
+<!ENTITY zotero.general.ignore "忽略">
+<!ENTITY zotero.general.apply "应用">
+<!ENTITY zotero.general.applyUpdates "应用全部">
 
 <!ENTITY zotero.errorReport.title "Zotero 错误报告">
 <!ENTITY zotero.errorReport.submissionInProgress "正在提交错误报告, 请稍候.">
