@@ -44,10 +44,6 @@ async function onLoad() {
 	let parentItemKey = io.parentItemKey;
 	let ref;
 
-	// Delegate undo/redo to the focused note editor iframe, which handles
-	// them internally (see editMenuOverlay.js)
-	zoteroInitChildWindowUndoRedo();
-
 	noteEditor = document.getElementById('zotero-note-editor');
 	noteEditor.mode = 'edit';
 	noteEditor.viewMode = 'window';
